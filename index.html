@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Scientific Calculator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden; /* Prevent scrollbars */
+            background: url('https://media.istockphoto.com/id/1419844586/vector/stem-blue-horizontal-frame-vector-education-bright-illustration.jpg?s=612x612&w=0&k=20&c=-A1eYLYulujNsiM26lkVy7qMT_Hp82N5EtKHSFRmigk=') no-repeat center center fixed; /* Set the background image */
+            background-size: cover; /* Cover the entire background */
+        }
+
+        .calculator-container {
+            position: relative; /* Allow child elements to be positioned relative to this */
+            z-index: 1; /* Make sure calculator is above the background */
+            width: 400px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9); /* Slight transparency for depth */
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .calculator-container h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .display {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: right;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            color: #444;
+            box-sizing: border-box;
+            background: #f9f9f9;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .button {
+            padding: 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            color: white;
+            transition: background 0.3s;
+        }
+
+        .button.operation { background-color: #4CAF50; }
+        .button.number { background-color: #2196F3; }
+        .button.memory { background-color: #FF5722; }
+
+        .button:hover { opacity: 0.8; }
+
+        .history {
+            margin-top: 20px;
+            background: #f3f3f3;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+
+        .button-zero {
+            grid-column: span 2;
+        }
+
+        .button-equal {
+            grid-column: span 1;
+            background-color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h1>Advanced Calculator</h1>
+        <input type="text" id="display" class="display" readonly>
+        <div class="button-grid">
+            <button class="button number" onclick="appendNumber('7')">7</button>
+            <button class="button number" onclick="appendNumber('8')">8</button>
+            <button class="button number" onclick="appendNumber('9')">9</button>
+            <button class="button operation" onclick="setOperation('/')">÷</button>
+            <button class="button operation" onclick="appendNumber('√')">√</button>
+            
+            <button class="button number" onclick="appendNumber('4')">4</button>
+            <button class="button number" onclick="appendNumber('5')">5</button>
+            <button class="button number" onclick="appendNumber('6')">6</button>
+            <button class="button operation" onclick="setOperation('*')">×</button>
+            <button class="button operation" onclick="setOperation('^')">^</button>
+
+            <button class="button number" onclick="appendNumber('1')">1</button>
+            <button class="button number" onclick="appendNumber('2')">2</button>
+            <button class="button number" onclick="appendNumber('3')">3</button>
+            <button class="button operation" onclick="setOperation('-')">−</button>
+            <button class="button operation" onclick="setOperation('log')">log</button>
+
+            <button class="button number button-zero" onclick="appendNumber('0')">0</button>
+            <button class="button number" onclick="appendNumber('.')">.</button>
+            <button class="button equal button-equal" onclick="calculate()">=</button>
+            <button class="button operation" onclick="setOperation('+')">+</button>
+            <button class="button memory" onclick="clearDisplay()">C</button>
+            <button class="button memory" onclick="storeMemory()">M+</button>
+            <button class="button memory" onclick="recallMemory()">MR</button>
+            <button class="button memory" onclick="clearMemory()">MC</button>
+            <button class="button operation" onclick="setOperation('sin')">sin</button>
+            <button class="button operation" onclick="setOperation('cos')">cos</button>
+            <button class="button operation" onclick="setOperation('tan')">tan</button>
+        </div>
+        <div class="history" id="history"></div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let currentOperation = null;
+        let memory = 0;
+
+        function appendNumber(number) {
+            display.value += number;
+        }
+
+        function setOperation(operation) {
+            if (display.value !== '') {
+                display.value += ` ${operation} `;
+            }
+        }
+
+        function calculate() {
+            try {
+                let expression = display.value
+                    .replace(/√/g, 'Math.sqrt(') // Convert √ to Math.sqrt(
+                    .replace(/log/g, 'Math.log10(')
+                    .replace(/sin/g, 'Math.sin(')
+                    .replace(/cos/g, 'Math.cos(')
+                    .replace(/tan/g, 'Math.tan(')
+                    .replace(/\^/g, '**');
+
+                // Handle matching for parentheses to close all functions
+                expression = expression.replace(/(\w+)\s*\((.*)\)/g, '$1($2)'); // Ensures functions are correctly closed
+                expression = expression.replace(/(\bMath\.\w+\()([^\)]*)/, '$1$2)'); // Add closing parenthesis for functions
+
+                const result = eval(expression); // Evaluate the expression
+                display.value = result; // Display the result
+                updateHistory(expression + " = " + result); // Log history
+            } catch (error) {
+                display.value = 'Error'; // Handle errors
+            }
+        }
+
+        function clearDisplay() {
+            display.value = '';
+        }
+
+        function updateHistory(entry) {
+            const history = document.getElementById('history');
+            history.innerHTML += `${entry}<br>`;
+        }
+
+        function storeMemory() {
+            memory = parseFloat(display.value);
+            clearDisplay();
+            alert('Stored in memory: ' + memory);
+        }
+
+        function recallMemory() {
+            if (!isNaN(memory)) {
+                clearDisplay();
+                display.value = memory;
+            } else {
+                alert('Memory is empty!');
+            }
+        }
+
+        function clearMemory() {
+            memory = 0;
+            alert('Memory cleared.');
+        }
+    </script>
+</body>
+</html>
